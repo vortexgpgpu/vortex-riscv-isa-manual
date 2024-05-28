@@ -1,0 +1,195 @@
+\documentclass{book}
+\usepackage[margin=1in]{geometry} % Set margins
+\usepackage{graphicx} % Include graphics
+\usepackage{hyperref}
+
+\newcommand{\clearandresetpage}{%
+  \clearpage
+  \setcounter{page}{1}%
+}
+
+\newcommand{\name}{Vortex } % manually insert space
+\newcommand{\warps}{16 } % manually insert space
+\newcommand{\warp}{\textbf{warp}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    \includegraphics[width=0.3\textwidth]{assets/vortex-logo.png}\\[1cm] 
+    
+    \textsc{\Huge Vortex 2.0 RISC-V\\[0.5cm] Instruction Set Architecture\\[0.5cm] Manual}\\[2cm] % Title
+    
+    \large Version 1.0\\[2cm] % Version
+    
+    \vfill
+    
+    {\large \today}\\[0.5cm] % Date
+    {\large High Performance Architecture Lab @ Georgia Tech}\\[0.5cm] % Company/Organization
+    
+\end{titlepage}
+
+\clearandresetpage % Fix to remove the blank page
+
+\tableofcontents % Insert table of contents
+
+\clearandresetpage % Fix to remove the blank page
+
+\chapter{Introduction}
+The Vortex RISC-V ISA aims to bring the popular RISC-V architecture to a General Purpose Graphics Processing Unit (GPUPU). The choice of a RISC-V ISA promotes research on this platform in the form of ISA extensions to explore new architectural designs within a fully open GPU. To help support development infrastructure for software, hardware, compilation, and simulation are already provided. The Vortex GPGPU platform has support for the OpenCL API and can target both Altera and AMD Xilinx FPGAs. The key features offered are: PCIe-based Host communication, High-bandwidth Cache sub-system, Multi-channel memory system, Design scaling \& configuration, and Pipeline elasticity.\\
+
+\clearandresetpage % Fix to remove the blank page
+
+
+\chapter{Base \& Standard Extensions}
+The Vortex ISA has support for RISC-V RV32IMAF and RV64IMAFD.
+
+\clearandresetpage % Fix to remove the blank page
+
+\chapter{Privileged Architecture}
+\clearandresetpage % Fix to remove the blank page
+
+
+\section{Privilege Levels}
+% \subsection{Machine Mode}
+% \subsection{Supervisor Mode}
+\subsection{User Mode}
+Currently, Vortex only has user privilage mode.
+\section{Control and Status Registers (CSRs)}
+
+% \section{Trap Handling}
+\clearandresetpage % Fix to remove the blank page
+
+\chapter{Memory Architecture}
+There are cores with an L1 cache, clusters with a configurable number of cores and a L2 cache, processors with a configurable number of clusters and an L3 cache.
+% \section{Memory Management Unit (MMU)}
+\section{Virtual Memory Support}
+Currently, in progress.
+
+% \chapter{Instruction Encoding}
+% \section{Instruction Formats}
+% \subsection{R-Type Instructions}
+% \subsection{I-Type Instructions}
+% \subsection{S-Type Instructions}
+% \subsection{B-Type Instructions}
+% \subsection{U-Type Instructions}
+% \subsection{J-Type Instructions}
+
+% \chapter{Exceptions and Interrupts}
+% \section{Exception Causes}
+% \section{Interrupt Causes}
+% \section{Exception and Interrupt Handling}
+\clearandresetpage % Fix to remove the blank page
+\chapter{Advanced Features}
+\section{Vortex Extensions}
+Vortex 2.0  extends the RISC-V ISA to support GPGPUs by adding six new instructions: \emph{wspawn}, \emph{tmc}, \emph{split}, \emph{join}, \emph{bar}, and \emph{tex}, as shown in Table \ref{table:isa}. They are all RISC-V R-Type instructions and fit in one opcode. They provide minimal ISA addition to handle wavefront activation, thread control, control divergence, synchronization, and texture filtering, the essential computational primitives to support SIMT execution model and graphics processing.
+
+\textbf{Wavefront Control:} \label{wc}
+
+We propose a \textit{wspawn} instruction to activate a number of {\warps} at a specific program's PC value, enabling multiple instances of that program to execute independently.
+
+\textbf{Thread Control:}
+
+We propose a \textit{tmc} instruction
+  to activate or deactivate threads within a {\warp} via a thread mask register, which is also accessible via the control status registers (CSRs).
+
+\textbf{Control Divergence:}
+
+  We propose the \textit{split} and \textit{join} instructions to handle control divergence. The \textit{split} instruction pushes information about the current state of the thread mask and the branch predication result for all threads into a hardware-immediate postdominator (IPDOM) stack~\cite{Kersey:2017:LSC:3132402.3132426}, and the \textit{join} instruction pops this out during reconvergence.
+
+\textbf{Synchronization:}
+
+  We propose a \textit{bar} instruction to synchronize {\warp} execution at barrier locations. A barrier is released when an expected number of {\warps} reach it. In addition, the barrier ID encodes whether it has local scope (intra-core) or global scope (inter-core).
+
+\begin{table}[h]
+
+\centering
+
+\begin{tabular}{||c | c||}
+
+ \hline
+
+Instructions & Description \\
+
+\hline\hline
+
+\textbf{wspawn} \%numW, \%PC & Wavefronts activation  \\
+
+ \textbf{tmc} \%numT & Thread mask control \\
+
+\textbf{split} \%pred & Control flow divergence \\
+
+\textbf{join} & Control flow reconvergence \\ [1ex]
+
+ \textbf{bar} \%barID, \%numW & Wavefronts barrier \\
+
+\textbf{tex} \%dest, \%u, \%v, \%lod & Texture sampling/filtering \\
+
+\hline
+
+\end{tabular}
+
+\caption{Proposed RISC-V \name ISA extension.}
+
+\label{table:isa}
+
+\end{table}
+
+\textbf{Texture Filtering:} We propose a \textit{tex} instruction for texture lookup. The instruction follows the R4 type format of RISC-V ISA, currently used for FMA operations. It has three source operands, namely, \textit{u, v, lod}, which specify the normalized coordinates of the source texel and the texture mipmap to use for the lookup. Other texture states (dimension, format, filtering mode, addressing mode, and memory address) are configurable via CSRs.
+
+\begin{table}[h]
+
+\centering
+
+% \begin{tabular}{||c | c||}
+
+ \caption{Proposed \name ISA extension. }
+
+\begin{tabular}{||c|c|c|c||}
+
+ \hline
+
+Instructions & Operands & Description \\
+
+\hline\hline
+
+  % \textbf{imadd} \%a, \%b, \%c  & Integer Multiplications and Add  \\ \hline
+
+ \textbf{vx\_rast} & & Raster Load \\
+
+ \textbf{vx\_rop} & \%pos,\%face, \%color, \%depth & ROP Store\\
+
+\textbf{vx\_imadd} & \%a, \%b, \%c, \%shift  & Interpolate \\
+\hline
+\end{tabular}
+\label{table:isa}
+\end{table}
+
+{\textbf{vx\_rast}} queries the rasterizer to request pixel stamps, which are discussed in section \ref{secLrasterizer}. The call is forwarded to the raster agent, which will fetch the next pixel stamp generated by the rasterizer and save them into its local CSRs for the fragment shader to access.
+
+\textbf{vx\_rop} submits the fragment shader result (position, face, color, and depth data) for each pixel to the ROP agent for it to be forwarded to the ROP unit. That result will eventually be written by the ROP unit to the destination render target at the provided pixel position. The face operand is a boolean value that indicates if the primitive is front-facing or back-facing during stencil operation. This instruction uses four source operands, but the RISC-V ISA only supports 3 operands at most, so we combined the position and face argument into a single register operand.
+
+\textbf{vx\_imadd} extends the RISC-V ISA with an integer multiply-add instruction. We added a 4th immediate operand to apply an optional left shift before the addition to support fixed-point multiplication. A \textit{shift} value of zero enables the integer operating mode. This instruction is used to accelerate the interpolation of fixed-point attributes.
+\clearandresetpage % Fix to remove the blank page
+\chapter{Application Binary Interface (ABI)}
+% \section{Function Calling Conventions}
+% \section{Register Usage Conventions}
+\section{Memory Layout}
+
+% \chapter{Platform-Level Interrupt Controller (PLIC)}
+% \section{PLIC Interface}
+% \section{PLIC and ISA Interaction}
+
+\appendix
+% \chapter{Opcode Map}
+% \chapter{Pseudo-Instruction Listing}
+\clearandresetpage % Fix to remove the blank page
+\chapter{Other Reference Materials}
+\begin{itemize}
+    \item \href{https://sites.gatech.edu/hparch/research/}{HPArch Website}
+    \item \href{https://vortex.cc.gatech.edu/}{Vortex Website}
+    \item \href{https://github.com/vortexgpgpu/vortex} {Vortex Github}
+\end{itemize}
+
+\end{document}
